@@ -1,19 +1,29 @@
-name: Ilk Docker CI Pipeline
+name: Docker Hub-a Avtomatik Push
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  build-job:
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Kodları bulud kompüterinə yüklə
       - name: Kodları götür
         uses: actions/checkout@v4
 
-      - name: Docker Image Yığ
-        run: docker build -t menim-veb-saytim:v1 .
+      # 2. Docker Hub-a daxil ol (Login)
+      - name: Docker Hub-a Login Ol
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Uğurlu Nəticə Mesajı
-        run: echo "Təbriklər! Docker Image uğurla yığıldı və test olundu! 🎉"
+      # 3. Image-i yığ və avtomatik Docker Hub-a göndər (Push)
+      - name: Build və Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/cicd-test:latest
