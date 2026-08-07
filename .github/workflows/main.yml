@@ -1,42 +1,26 @@
-name: Tam CI/CD Pipeline (Build, Push & Deploy)
+name: Tam CI Pipeline (Build və Push)
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  build-push-deploy:
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Kodları bulud kompüterinə yüklə
       - name: Kodları götür
         uses: actions/checkout@v4
 
-      # 2️⃣ Docker Hub-a daxil ol
       - name: Docker Hub-a Login Ol
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 3️⃣ Imic-i yığ və Docker Hub-a Push et (CI)
       - name: Build və Push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/cicd-test:latest
-
-      # 4️⃣ SSH ilə Serverə Qoşul və Canlıya Çıxar (CD)
-      - name: Serverə Deploy Et
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cicd-test:latest
-            docker stop my-app || true
-            docker rm my-app || true
-            docker run -d --name my-app -p 80:80 ${{ secrets.DOCKERHUB_USERNAME }}/cicd-test:latest
